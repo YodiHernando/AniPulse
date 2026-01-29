@@ -34,7 +34,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
-            className="group relative w-full h-full flex flex-col gap-2"
+            className="group relative w-full h-full flex flex-col gap-2 transition-transform active:scale-95 md:active:scale-100"
         >
             {/* Poster Image Container */}
             <div className="relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 bg-slate-900 shadow-lg group-hover:shadow-blue-500/20 group-hover:border-blue-500/30 transition-all duration-300">
@@ -47,8 +47,8 @@ const AnimeCard = ({ anime, index = 0 }) => {
                     />
                 </Link>
 
-                {/* Overlay Actions (Visible on Hover/Focus) */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
+                {/* Overlay Actions (Desktop Only) */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hidden md:flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
                     <Link to={`/tv/${anime.id}`} className="absolute inset-0 z-0" aria-label="View Details" />
 
                     <div className="z-10 flex flex-col gap-2 w-full">

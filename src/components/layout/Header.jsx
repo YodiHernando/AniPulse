@@ -52,7 +52,16 @@ const Header = () => {
     const handleSearchSubmit = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+            // Context-aware search
+            let type = 'tv'; // Default
+
+            // If on Browse page, respect the current tab/type
+            if (location.pathname === '/browse') {
+                const params = new URLSearchParams(location.search);
+                type = params.get('type') || localStorage.getItem('browseType') || 'tv';
+            }
+
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}&type=${type}`);
             setIsSearchOpen(false);
             setSearchQuery('');
         }

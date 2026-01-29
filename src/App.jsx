@@ -31,7 +31,8 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/search" element={<SearchResults />} />
-                        <Route path="/tv/:id" element={<AnimeDetail />} />
+                        <Route path="/tv/:id" element={<AnimeDetail type="tv" />} />
+                        <Route path="/movie/:id" element={<AnimeDetail type="movie" />} />
                         <Route path="/browse" element={<Browse />} />
                     </Routes>
                 </Layout>

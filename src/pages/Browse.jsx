@@ -1,21 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { getGenres, getDiscoverAnime, getTrendingAnime, getUpcomingAnime } from '../services/tmdb';
+import { useSearchParams } from 'react-router-dom';
+import { getGenres, getDiscoverMedia, getTrendingMedia, getUpcomingMedia } from '../services/tmdb';
 import AnimeCard from '../components/ui/AnimeCard';
-import { Filter, X, Loader2, Sparkles, TrendingUp, Calendar, Star } from 'lucide-react';
+import { Filter, X, Loader2, Sparkles, TrendingUp, Calendar, Star, Clapperboard, MonitorPlay } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import PageTransition from '../components/utils/PageTransition';
 
 const Browse = () => {
-    const [selectedGenre, setSelectedGenre] = useState(null);
-    const [activeTab, setActiveTab] = useState('newest'); // 'newest' | 'trending' | 'top_rated' | 'upcoming'
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    useDocumentTitle('Browse Anime - AniPulse');
+    // Initialize state from URL params or LocalStorage
+    const initialType = searchParams.get('type')
+        || localStorage.getItem('browseType')
+        || 'tv';
+
+    // Tab persistence
+    const initialTab = searchParams.get('tab') || 'newest';
+
+    const [mediaType, setMediaType] = useState(initialType);
+    const [selectedGenre, setSelectedGenre] = useState(null);
+    const [activeTab, setActiveTab] = useState(initialTab);
+
+    useDocumentTitle(`Browse ${mediaType === 'tv' ? 'Series' : 'Movies'} - AniPulse`);
+
+    // Sync URL and LocalStorage when type/tab changes
+    useEffect(() => {
+        const params = { type: mediaType };
+        if (activeTab !== 'newest') params.tab = activeTab;
+        setSearchParams(params);
+        localStorage.setItem('browseType', mediaType);
+    }, [mediaType, activeTab, setSearchParams]);
+
+    // Scroll Restoration Logic
+    useEffect(() => {
+        // Save scroll position before unmount or navigation
+        const handleScroll = () => {
+            sessionStorage.setItem(`browse_scroll_${mediaType}_${activeTab}`, window.scrollY.toString());
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [mediaType, activeTab]);
+
+
+
+    const handleTypeChange = (type) => {
+        setMediaType(type);
+        setSelectedGenre(null);
+        setActiveTab('newest'); // Optional: reset tab or keep it
+    };
 
     const { data: genres, isLoading: isGenresLoading } = useQuery({
-        queryKey: ['genres'],
-        queryFn: getGenres,
+        queryKey: ['genres', mediaType],
+        queryFn: () => getGenres(mediaType),
         staleTime: Infinity,
         select: (data) => {
             const excludedIds = [10763, 10764, 10766, 10767, 37, 99];
@@ -30,28 +72,33 @@ const Browse = () => {
         isFetchingNextPage,
         isLoading: isListLoading
     } = useInfiniteQuery({
-        queryKey: ['browseAnime', activeTab, selectedGenre?.id],
+        queryKey: ['browseMedia', mediaType, activeTab, selectedGenre?.id],
         queryFn: ({ pageParam = 1 }) => {
-            // If specific tabs and NO genre filter (some endpoints don't support mixing nicely, but we'll try our best)
-            // Note: getTrendingAnime logic currently ignores genre filter in API call potentially, but we apply client side filter.
-            // For simplicity, if a Genre is selected, we usually default back to Discover to ensure accurate filtering.
-
-            if (activeTab === 'trending' && !selectedGenre) return getTrendingAnime(pageParam);
-            if (activeTab === 'upcoming') return getUpcomingAnime(pageParam, selectedGenre?.id);
+            if (activeTab === 'trending' && !selectedGenre) return getTrendingMedia(mediaType, pageParam);
+            if (activeTab === 'upcoming') return getUpcomingMedia(mediaType, pageParam, selectedGenre?.id);
 
             let sortBy = 'popularity.desc';
-            if (activeTab === 'newest') sortBy = 'first_air_date.desc';
+            if (activeTab === 'newest') sortBy = mediaType === 'movie' ? 'primary_release_date.desc' : 'first_air_date.desc';
             if (activeTab === 'top_rated') sortBy = 'vote_average.desc';
-            if (activeTab === 'trending') sortBy = 'popularity.desc'; // Fallback if genre selected for Trending
+            if (activeTab === 'trending') sortBy = 'popularity.desc';
 
-            // Special case logic for "Upcoming + Genre" via discover could be complex, 
-            // but let's stick to standard sorts for now or assume Discover handles it.
-            // Valid sort_by values: popularity.desc, vote_average.desc, first_air_date.desc
-
-            return getDiscoverAnime(pageParam, selectedGenre?.id, sortBy);
+            return getDiscoverMedia(mediaType, pageParam, selectedGenre?.id, sortBy);
         },
         getNextPageParam: (lastPage) => lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
     });
+
+    // Restore scroll position when data is loaded
+    useEffect(() => {
+        if (!isListLoading && animeList) {
+            const savedScroll = sessionStorage.getItem(`browse_scroll_${mediaType}_${activeTab}`);
+            if (savedScroll) {
+                // Small timeout to ensure DOM is ready and layout is stable
+                setTimeout(() => {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }, 100);
+            }
+        }
+    }, [isListLoading, mediaType, activeTab]); // Only depend on loading state and keys
 
     const tabs = [
         { id: 'newest', label: 'Newest', icon: Sparkles },
@@ -61,13 +108,35 @@ const Browse = () => {
     ];
 
     return (
-        <PageTransition className="container mx-auto px-4 py-8 min-h-screen">
+        <PageTransition className="container mx-auto px-4 py-8 pt-32 min-h-screen">
             {/* Header & Controls */}
             <div className="flex flex-col gap-8 mb-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-                        <Filter className="text-blue-500" /> Browse Anime
+                        <Filter className="text-blue-500" /> {mediaType === 'tv' ? 'Browse Series' : 'Browse Movies'}
                     </h1>
+
+                    {/* Type Toggle */}
+                    <div className="flex bg-slate-900 border border-white/10 p-1 rounded-full w-fit self-start md:self-auto">
+                        <button
+                            onClick={() => handleTypeChange('tv')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all ${mediaType === 'tv'
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                                : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            <MonitorPlay className="w-4 h-4" /> Series
+                        </button>
+                        <button
+                            onClick={() => handleTypeChange('movie')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all ${mediaType === 'movie'
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                                : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            <Clapperboard className="w-4 h-4" /> Movies
+                        </button>
+                    </div>
                 </div>
 
                 {/* Main Tabs */}

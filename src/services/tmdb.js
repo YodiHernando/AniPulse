@@ -40,79 +40,93 @@ export const getThisSeasonAnime = async () => {
     return response.data.results.filter(item => item.genre_ids.includes(16));
 };
 
-export const getTrendingAnime = async (page = 1) => {
-    // Trending endpoint returns mixed content (TV shows + Anime).
-    // To fill a page with 20 *Anime* items, we might need to fetch multiple pages from the API
-    // because page 1 might only have 5 anime and 15 western shows.
+// --- Generic Media Fetchers (Anime: TV & Movie) ---
 
-    // However, for simplicity and speed in this specific function, we will return what we get 
-    // but we can try to fetch a bit more aggressively if needed.
-    // Let's stick to the /trending endpoint because it gives the TRUE "hot right now" list.
+export const getTrendingMedia = async (type = 'tv', page = 1) => {
+    // HYBRID STRATEGY:
+    // 1. Movies: Global /trending movies rarely have Anime. Deep fetching is inefficient and results in low count.
+    //    We use /discover with popularity.desc. This guarantees 20 items per page.
+    if (type === 'movie') {
+        const params = {
+            with_genres: 16,
+            with_original_language: 'ja',
+            sort_by: 'popularity.desc',
+            page: page,
+            include_adult: false
+        };
+        const response = await tmdb.get(`/discover/${type}`, { params });
+        return response.data;
+    }
 
-    // We'll fetch 5 pages concurrently to DRASTICALLY increase the chance of getting enough anime items
-    // Since 'page' argument here is the "UI Page", we map it to API pages.
-    // UI Page 1 -> API Page 1, 2, 3, 4, 5
+    // 2. TV Series: Global /discover favors long-running shows (Legacy).
+    //    User wants "Trending Now". So we use the real /trending endpoint + Deep Fetch.
+    const pagesToFetch = 10;
+    const startPage = (page - 1) * pagesToFetch + 1;
 
-    const startPage = (page - 1) * 5 + 1;
-    const [res1, res2, res3, res4, res5] = await Promise.all([
-        tmdb.get(`/trending/tv/week`, { params: { with_original_language: 'ja', page: startPage } }),
-        tmdb.get(`/trending/tv/week`, { params: { with_original_language: 'ja', page: startPage + 1 } }),
-        tmdb.get(`/trending/tv/week`, { params: { with_original_language: 'ja', page: startPage + 2 } }),
-        tmdb.get(`/trending/tv/week`, { params: { with_original_language: 'ja', page: startPage + 3 } }),
-        tmdb.get(`/trending/tv/week`, { params: { with_original_language: 'ja', page: startPage + 4 } })
-    ]);
+    // Generate promises for parallel fetching
+    const requests = Array.from({ length: pagesToFetch }, (_, i) =>
+        tmdb.get(`/trending/${type}/week`, {
+            params: {
+                with_original_language: 'ja',
+                page: startPage + i
+            }
+        })
+    );
 
-    const allResults = [
-        ...res1.data.results,
-        ...res2.data.results,
-        ...res3.data.results,
-        ...res4.data.results,
-        ...res5.data.results
-    ];
+    const responses = await Promise.all(requests);
+    const allResults = responses.flatMap(r => r.data.results);
 
-    // Strict client-side filter for anime
+    // Filter for Anime (Genre 16) + Japanese
     const animeResults = allResults.filter(item =>
         item.genre_ids?.includes(16) &&
         item.original_language === 'ja'
     );
 
-    // Remove duplicates just in case
-    const uniqueAnime = [...new Map(animeResults.map(item => [item.id, item])).values()];
-
-    // Cut to exactly 20 items to look clean in the grid
-    const exactResults = uniqueAnime.slice(0, 20);
+    // Deduplicate by ID
+    const unique = [...new Map(animeResults.map(item => [item.id, item])).values()];
 
     return {
-        // Mocking the pagination structure to keep infinite scroll working
         page: page,
-        results: exactResults,
-        total_pages: 1000,
-        total_results: 10000
+        results: unique.slice(0, 20),
+        total_pages: 100, // Cap at 100 deep-pages to be safe
+        total_results: 2000
     };
 };
 
-export const getUpcomingAnime = async (page = 1, genreId = null) => {
-    // TMDB doesn't have a direct "upcoming TV" like movies, so we use discover with future dates
+
+
+export const getUpcomingMedia = async (type = 'tv', page = 1, genreId = null) => {
     const today = new Date().toISOString().split('T')[0];
 
     const params = {
         with_genres: 16,
         with_original_language: 'ja',
-        sort_by: 'first_air_date.asc', // Soonest first
-        'first_air_date.gte': today,
+        // Movies use 'release_date', TV uses 'first_air_date'
+        sort_by: type === 'movie' ? 'release_date.asc' : 'first_air_date.asc',
         page: page
     };
+
+    // Date filter key depends on type
+    if (type === 'movie') {
+        params['primary_release_date.gte'] = today;
+        params['release_date.gte'] = today;
+    } else {
+        params['first_air_date.gte'] = today;
+    }
 
     if (genreId) {
         params.with_genres = `16,${genreId}`;
     }
 
-    const response = await tmdb.get('/discover/tv', { params });
+    const response = await tmdb.get(`/discover/${type}`, { params });
     return response.data;
 };
 
-export const getAiringTodayAnime = async () => {
-    const response = await tmdb.get('/tv/airing_today', {
+export const getAiringTodayMedia = async (type = 'tv') => {
+    // 'airing_today' is TV specific. Movies use 'now_playing' but that logic is slightly different.
+    const endpoint = type === 'movie' ? '/movie/now_playing' : '/tv/airing_today';
+
+    const response = await tmdb.get(endpoint, {
         params: {
             with_original_language: 'ja',
             page: 1
@@ -121,46 +135,65 @@ export const getAiringTodayAnime = async () => {
     return response.data.results.filter(item => item.genre_ids?.includes(16));
 };
 
-export const getDiscoverAnime = async (page = 1, genreId = null, sortBy = 'popularity.desc') => {
+export const getDiscoverMedia = async (type = 'tv', page = 1, genreId = null, sortBy = 'popularity.desc') => {
+    // Remap sort keys for Movies if needed
+    let safeSortBy = sortBy;
+    if (type === 'movie') {
+        if (sortBy === 'first_air_date.desc') safeSortBy = 'primary_release_date.desc';
+        if (sortBy === 'first_air_date.asc') safeSortBy = 'primary_release_date.asc';
+    }
+
     const params = {
         with_genres: 16, // Animation
         with_original_language: 'ja',
-        sort_by: sortBy,
+        sort_by: safeSortBy,
         page: page,
-        'vote_count.gte': 50 // Lower threshold to allow new shows to appear
+        'vote_count.gte': 50
     };
 
     if (genreId) {
         params.with_genres = `16,${genreId}`;
     }
 
-    // Special handling for Newest to ensure we get actual new shows
-    if (sortBy === 'first_air_date.desc') {
+    // Newest Filter Logic (exclude upcoming)
+    if (safeSortBy === 'first_air_date.desc' || safeSortBy === 'primary_release_date.desc') {
         const today = new Date().toISOString().split('T')[0];
-        // Optionally restrict to released shows to avoid far-future placeholders, 
-        // but 'first_air_date.desc' usually works okay.
-        // We might want to filter out things with NO votes if needed, but 'newest' implies fresh.
         params['vote_count.gte'] = 0;
-        params['first_air_date.lte'] = today; // Exclude future shows (Upcoming)
+
+        if (type === 'movie') {
+            params['primary_release_date.lte'] = today;
+        } else {
+            params['first_air_date.lte'] = today;
+        }
     }
 
-    const response = await tmdb.get('/discover/tv', { params });
+    const response = await tmdb.get(`/discover/${type}`, { params });
     return response.data;
 };
 
-export const searchAnime = async (query) => {
-    const response = await tmdb.get('/search/tv', {
+export const searchMedia = async (query, type = 'tv') => {
+    // Search endpoint for generic type
+    const response = await tmdb.get(`/search/${type}`, {
         params: { query },
     });
+
+    // Filter for Anime (Genre 16) + Japanese
     return response.data.results.filter(
-        (item) => item.original_language === 'ja' && item.genre_ids.includes(16)
+        (item) => item.original_language === 'ja' && item.genre_ids?.includes(16)
     );
 };
 
-export const getAnimeDetails = async (id) => {
-    const response = await tmdb.get(`/tv/${id}`);
+// Legacy support
+export const searchAnime = (query) => searchMedia(query, 'tv');
+
+export const getMediaDetails = async (id, type = 'tv') => {
+    // Generic detail fetcher
+    const response = await tmdb.get(`/${type}/${id}`);
     return response.data;
 };
+
+// Legacy support (redirect to generic)
+export const getAnimeDetails = (id) => getMediaDetails(id, 'tv');
 
 export const getSeasonDetails = async (tvId, seasonNumber) => {
     const response = await tmdb.get(`/tv/${tvId}/season/${seasonNumber}`);
@@ -177,7 +210,7 @@ export const getImageUrl = (path, size = 'w500') => {
     return `https://image.tmdb.org/t/p/${size}${path}`;
 };
 
-export const getGenres = async () => {
-    const response = await tmdb.get('/genre/tv/list');
+export const getGenres = async (type = 'tv') => {
+    const response = await tmdb.get(`/genre/${type}/list`);
     return response.data.genres;
 };

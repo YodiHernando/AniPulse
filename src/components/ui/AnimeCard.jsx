@@ -29,6 +29,14 @@ const AnimeCard = ({ anime, index = 0 }) => {
         setIsModalOpen(true);
     };
 
+    const title = anime.name || anime.title;
+    const date = anime.first_air_date || anime.release_date;
+    const year = date ? date.split('-')[0] : 'TBA';
+    // Determine type: explicitly passed, or inferred from data, or default to 'tv'
+    const isMovie = anime.media_type === 'movie' || anime.title;
+    const link = isMovie ? `/movie/${anime.id}` : `/tv/${anime.id}`;
+    const typeLabel = isMovie ? 'Movie' : 'TV Series';
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,10 +46,10 @@ const AnimeCard = ({ anime, index = 0 }) => {
         >
             {/* Poster Image Container */}
             <div className="relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 bg-slate-900 shadow-lg group-hover:shadow-blue-500/20 group-hover:border-blue-500/30 transition-all duration-300">
-                <Link to={`/tv/${anime.id}`}>
+                <Link to={link}>
                     <img
                         src={getImageUrl(anime.poster_path, 'w342')}
-                        alt={anime.name}
+                        alt={title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
                     />
@@ -49,7 +57,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
 
                 {/* Overlay Actions (Desktop Only) */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hidden md:flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
-                    <Link to={`/tv/${anime.id}`} className="absolute inset-0 z-0" aria-label="View Details" />
+                    <Link to={link} className="absolute inset-0 z-0" aria-label="View Details" />
 
                     <div className="z-10 flex flex-col gap-2 w-full">
                         <button
@@ -79,8 +87,8 @@ const AnimeCard = ({ anime, index = 0 }) => {
             {/* Info Section */}
             <div className="flex flex-col gap-1 px-1">
                 <div className="flex items-start justify-between gap-2">
-                    <Link to={`/tv/${anime.id}`} className="font-semibold text-white text-base leading-tight hover:text-blue-400 transition-colors line-clamp-1" title={anime.name}>
-                        {anime.name}
+                    <Link to={link} className="font-semibold text-white text-base leading-tight hover:text-blue-400 transition-colors line-clamp-1" title={title}>
+                        {title}
                     </Link>
                     <div className="flex items-center gap-1 bg-slate-800/80 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">
                         <Star className="w-3 h-3 text-yellow-500 fill-current" />
@@ -90,9 +98,9 @@ const AnimeCard = ({ anime, index = 0 }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>{anime.first_air_date ? anime.first_air_date.split('-')[0] : 'TBA'}</span>
+                    <span>{year}</span>
                     <span>•</span>
-                    <span className="truncate">TV Series</span>
+                    <span className="truncate">{typeLabel}</span>
                 </div>
             </div>
         </motion.div>

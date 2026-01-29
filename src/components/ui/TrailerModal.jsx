@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const TrailerModal = ({ videoKey, isOpen, onClose }) => {
     // Close on escape key
@@ -14,29 +15,30 @@ const TrailerModal = ({ videoKey, isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <AnimatePresence>
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-pointer"
                 onClick={onClose}
             >
+                {/* Close Button - Fixed position relative to viewport */}
+                <button
+                    onClick={onClose}
+                    className="fixed top-6 right-6 z-[10000] p-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors backdrop-blur-md border border-white/10"
+                >
+                    <X className="w-8 h-8" />
+                </button>
+
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+                    className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 cursor-default"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-white/20 transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-
                     {videoKey ? (
                         <iframe
                             className="w-full h-full"
@@ -52,7 +54,8 @@ const TrailerModal = ({ videoKey, isOpen, onClose }) => {
                     )}
                 </motion.div>
             </motion.div>
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 };
 

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getAnimeDetails, getSeasonDetails, getImageUrl } from '../services/tmdb';
 import { Loader2, Calendar, Star, Clock } from 'lucide-react';
 import PulseChart from '../components/charts/PulseChart';
+import EpisodeCard from '../components/ui/EpisodeCard';
 import { useHistory } from '../hooks/useHistory';
 
 const AnimeDetail = () => {
@@ -180,41 +181,7 @@ const AnimeDetail = () => {
                     Episodes <span className="text-slate-500 text-sm font-normal">({episodes?.length})</span>
                 </h3>
                 {episodes?.map((ep) => (
-                    <div key={ep.id} className="group flex flex-col md:flex-row gap-4 md:items-center bg-slate-900/40 hover:bg-slate-900/80 border border-white/5 p-4 rounded-xl transition-colors">
-                        {/* Thumbnail */}
-                        <div className="relative shrink-0 w-full md:w-[180px] aspect-video rounded-lg overflow-hidden bg-black">
-                            <img
-                                src={getImageUrl(ep.still_path, 'w300')}
-                                alt={`Ep ${ep.episode_number}`}
-                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                loading="lazy"
-                            />
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-grow min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-blue-500 font-bold text-sm">#{ep.episode_number}</span>
-                                <h4 className="font-semibold text-white truncate max-w-[200px] md:max-w-full">{ep.name}</h4>
-                            </div>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
-                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {ep.air_date}</span>
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {ep.runtime} min</span>
-                            </div>
-                            <p className="text-slate-400 text-sm line-clamp-2 md:line-clamp-1 group-hover:line-clamp-none transition-all">
-                                {ep.overview || "No description available."}
-                            </p>
-                        </div>
-
-                        {/* Rating */}
-                        <div
-                            className={`shrink-0 text-right md:text-center min-w-[60px] ${ep.vote_average >= 8 ? 'text-green-400' : ep.vote_average >= 6.1 ? 'text-yellow-400' : 'text-red-400'
-                                }`}
-                        >
-                            <div className="text-2xl font-bold">{ep.vote_average > 0 ? ep.vote_average.toFixed(1) : '-'}</div>
-                            <div className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Score</div>
-                        </div>
-                    </div>
+                    <EpisodeCard key={ep.id} ep={ep} />
                 ))}
             </div>
         </div>

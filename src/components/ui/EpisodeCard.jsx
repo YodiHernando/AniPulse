@@ -8,7 +8,7 @@ const EpisodeCard = ({ ep }) => {
     return (
         <div
             onClick={() => setIsExpanded(!isExpanded)}
-            className="group flex flex-col md:flex-row gap-4 md:items-center bg-slate-900/40 hover:bg-slate-900/80 border border-white/5 p-4 rounded-xl transition-colors cursor-pointer"
+            className="group flex flex-col md:flex-row gap-4 md:items-center bg-slate-900/40 hover:bg-slate-900/80 border border-white/5 hover:border-blue-500/30 p-4 rounded-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10"
         >
             {/* Thumbnail */}
             <div className="relative shrink-0 w-full md:w-[180px] aspect-video rounded-lg overflow-hidden bg-black">
@@ -35,8 +35,8 @@ const EpisodeCard = ({ ep }) => {
                     Desktop: Hover reveals (group-hover) OR click (isExpanded)
                 */}
                 <p className={`text-slate-400 text-sm transition-all ${isExpanded
-                        ? 'line-clamp-none'
-                        : 'line-clamp-2 md:line-clamp-1 md:group-hover:line-clamp-none'
+                    ? 'line-clamp-none'
+                    : 'line-clamp-2 md:line-clamp-1 md:group-hover:line-clamp-none'
                     }`}>
                     {ep.overview || "No description available."}
                 </p>

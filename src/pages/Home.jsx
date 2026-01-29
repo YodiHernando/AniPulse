@@ -59,7 +59,7 @@ const Home = () => {
                 className="space-y-6 max-w-2xl w-full px-4 pt-20 min-h-[50vh] flex flex-col justify-center"
             >
                 <h1 className="text-4xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">
-                    Ani<span className="text-blue-500">Pulse</span>.
+                    Ani<span className="text-blue-500">Pulse</span>
                 </h1>
                 <p className="text-slate-400 text-lg md:text-xl font-light">
                     Track the heartbeat of anime quality.

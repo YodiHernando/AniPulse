@@ -6,40 +6,43 @@ import { Star, Calendar, Info, ChevronRight, Play, ChevronLeft } from 'lucide-re
 
 const HeroCarousel = ({ slides }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const items = slides.slice(0, 10); // Ensure Top 10
+    const [direction, setDirection] = useState(0);
+    const items = slides.slice(0, 10);
     const timerRef = React.useRef(null);
 
     const resetTimer = () => {
         clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
+            setDirection(1);
             setCurrentIndex((prev) => (prev + 1) % items.length);
         }, 10000);
     };
 
     const nextSlide = () => {
+        setDirection(1);
         setCurrentIndex((prev) => (prev + 1) % items.length);
         resetTimer();
     };
     const prevSlide = () => {
+        setDirection(-1);
         setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
         resetTimer();
     };
     const goToSlide = (index) => {
+        setDirection(index > currentIndex ? 1 : -1);
         setCurrentIndex(index);
         resetTimer();
     };
 
     useEffect(() => {
         timerRef.current = setInterval(() => {
+            setDirection(1);
             setCurrentIndex((prev) => (prev + 1) % items.length);
-        }, 10000); // 10 seconds auto-play
+        }, 10000);
 
         const handleKeyDown = (e) => {
-            if (e.key === 'ArrowRight') {
-                nextSlide();
-            } else if (e.key === 'ArrowLeft') {
-                prevSlide();
-            }
+            if (e.key === 'ArrowRight') nextSlide();
+            else if (e.key === 'ArrowLeft') prevSlide();
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -48,48 +51,74 @@ const HeroCarousel = ({ slides }) => {
             clearInterval(timerRef.current);
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [items.length]); // Note: relying on closure for nextSlide/prevSlide might be stale if not careful, 
-    // but since they use functional state updates, it's safe for index changes.
-    // However, resetTimer isn't called here. Ideally we wrap next/prev in useCallback or just call raw setIndex.
-    // Let's keep it simple and safe:
-
-    // We need to re-attach listener if nextSlide/prevSlide change, OR use ref for handlers.
-    // Simpler approach: define key handler logic inside effect or use a separate effect.
-    // Let's just add the listener in a separate effect that depends on the functions if needed, 
-    // but the functions are re-created every render.
-    // Optimization: wrap nextSlide/prevSlide in useCallback, but let's just put the logic in the effect for simplicity.
-
+    }, [items.length]);
 
     const handleDragEnd = (event, info) => {
         const offset = info.offset.x;
         const velocity = info.velocity.x;
 
-        if (offset < -50 || velocity < -500) {
-            nextSlide();
-        } else if (offset > 50 || velocity > 500) {
-            prevSlide();
-        }
+        if (offset < -50 || velocity < -500) nextSlide();
+        else if (offset > 50 || velocity > 500) prevSlide();
     };
 
     if (!items.length) return null;
 
     const currentAnime = items[currentIndex];
+    const nextAnimeIndex = (currentIndex + 1) % items.length;
+    const nextAnime = items[nextAnimeIndex];
+
+    const variants = {
+        enter: (direction) => ({
+            x: direction > 0 ? '100%' : '-100%',
+            opacity: 1,
+            zIndex: 1 // Above exiting slide
+        }),
+        center: {
+            x: 0,
+            opacity: 1,
+            zIndex: 1
+        },
+        exit: (direction) => ({
+            x: direction < 0 ? '100%' : '-100%',
+            opacity: 1, // Keep opacity to avoid gray flash
+            zIndex: 0
+        })
+    };
 
     return (
         <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded-2xl shadow-2xl group border border-white/5 bg-slate-900 touch-pan-y">
-            <AnimatePresence mode="wait">
+
+            {/* Background Layer (Next Slide Preview) - Fixes Gray Gap */}
+            <div className="absolute inset-0 z-0">
+                {nextAnime?.backdrop_path && (
+                    <img
+                        src={getImageUrl(nextAnime.backdrop_path, 'original')}
+                        alt="Next"
+                        className="w-full h-full object-cover opacity-60"
+                    />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+            </div>
+
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.div
                     key={currentAnime.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8 }}
+                    custom={direction}
+                    variants={variants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                        x: { type: "spring", stiffness: 300, damping: 30 },
+                        opacity: { duration: 0.2 }
+                    }}
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={1}
                     onDragEnd={handleDragEnd}
-                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                    className="absolute inset-0 cursor-grab active:cursor-grabbing z-10 bg-slate-900" // bg-slate-900 ensures opacity handles logic
                 >
+
                     {/* Backdrop Image */}
                     <div className="absolute inset-0">
                         <img

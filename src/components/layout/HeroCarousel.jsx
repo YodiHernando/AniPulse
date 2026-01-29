@@ -60,12 +60,23 @@ const HeroCarousel = ({ slides }) => {
     // Optimization: wrap nextSlide/prevSlide in useCallback, but let's just put the logic in the effect for simplicity.
 
 
+    const handleDragEnd = (event, info) => {
+        const offset = info.offset.x;
+        const velocity = info.velocity.x;
+
+        if (offset < -50 || velocity < -500) {
+            nextSlide();
+        } else if (offset > 50 || velocity > 500) {
+            prevSlide();
+        }
+    };
+
     if (!items.length) return null;
 
     const currentAnime = items[currentIndex];
 
     return (
-        <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded-2xl shadow-2xl group border border-white/5 bg-slate-900">
+        <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded-2xl shadow-2xl group border border-white/5 bg-slate-900 touch-pan-y">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentAnime.id}
@@ -73,7 +84,11 @@ const HeroCarousel = ({ slides }) => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="absolute inset-0"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={1}
+                    onDragEnd={handleDragEnd}
+                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
                 >
                     {/* Backdrop Image */}
                     <div className="absolute inset-0">
@@ -124,19 +139,19 @@ const HeroCarousel = ({ slides }) => {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.6 }}
-                            className="flex items-center gap-4 pt-4"
+                            className="flex items-center gap-3 md:gap-4 pt-2 md:pt-4"
                         >
                             <Link
                                 to={`/tv/${currentAnime.id}`}
-                                className="flex items-center gap-2 px-8 py-3 bg-white text-slate-950 font-bold rounded-full hover:bg-slate-200 transition-all transform hover:scale-105 shadow-xl shadow-white/10"
+                                className="flex items-center gap-2 px-5 py-2.5 md:px-8 md:py-3 bg-white text-slate-950 font-bold text-sm md:text-base rounded-full hover:bg-slate-200 transition-all transform hover:scale-105 shadow-xl shadow-white/10"
                             >
-                                <Play className="w-5 h-5 fill-current" /> Watch Now
+                                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" /> Watch Now
                             </Link>
                             <Link
                                 to={`/tv/${currentAnime.id}`}
-                                className="flex items-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-full hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10"
+                                className="flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-white/10 text-white font-semibold text-sm md:text-base rounded-full hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10"
                             >
-                                <Info className="w-5 h-5" /> Details
+                                <Info className="w-4 h-4 md:w-5 md:h-5" /> Details
                             </Link>
                         </motion.div>
                     </div>
@@ -144,7 +159,7 @@ const HeroCarousel = ({ slides }) => {
             </AnimatePresence>
 
             {/* Progress Indicators */}
-            <div className="absolute bottom-8 right-8 flex items-center gap-2 z-20">
+            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 flex items-center gap-2 z-20">
                 {items.map((_, idx) => (
                     <button
                         key={idx}

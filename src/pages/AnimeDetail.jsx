@@ -72,38 +72,39 @@ const AnimeDetail = () => {
         : 'N/A';
 
     return (
-        <div className="pb-20">
+        <div className="pb-20 pt-20 md:pt-24">
             {/* Hero Section */}
-            <div className="relative h-[50vh] w-full rounded-2xl overflow-hidden mb-12 border border-white/5">
-                <div className="absolute inset-0 bg-slate-900">
+            {/* Hero Section */}
+            <div className="relative md:h-[50vh] w-full rounded-2xl overflow-hidden mb-12 border border-white/5 bg-slate-900">
+                <div className="absolute inset-0">
                     {anime.backdrop_path && (
                         <img
                             src={getImageUrl(anime.backdrop_path, 'original')}
                             alt="Backdrop"
-                            className="w-full h-full object-cover opacity-40 blur-sm"
+                            className="w-full h-full object-cover opacity-30 md:opacity-40 blur-sm"
                         />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row gap-8 items-end">
+                <div className="relative md:absolute md:bottom-0 md:left-0 w-full p-6 md:p-12 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-end z-10">
                     {anime.poster_path ? (
                         <img
                             src={getImageUrl(anime.poster_path, 'w342')}
                             alt={anime.name}
-                            className="w-[160px] md:w-[220px] rounded-xl shadow-2xl border-4 border-slate-950" // Floating effect
+                            className="w-[180px] md:w-[220px] rounded-xl shadow-2xl border-4 border-slate-950 shrink-0" // Floating effect
                         />
                     ) : (
-                        <div className="w-[160px] md:w-[220px] aspect-[2/3] bg-slate-800 rounded-xl border-4 border-slate-950 flex items-center justify-center text-slate-500 text-xs">
+                        <div className="w-[180px] md:w-[220px] aspect-[2/3] bg-slate-800 rounded-xl border-4 border-slate-950 flex items-center justify-center text-slate-500 text-xs shrink-0">
                             No Poster
                         </div>
                     )}
-                    <div className="mb-4 space-y-4 max-w-3xl">
-                        <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">{anime.name}</h1>
-                        <p className="text-slate-300 text-sm/relaxed line-clamp-3 md:line-clamp-none max-w-2xl">
+                    <div className="space-y-4 max-w-3xl text-center md:text-left pt-4 md:pt-0">
+                        <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">{anime.name}</h1>
+                        <p className="text-slate-300 text-sm/relaxed line-clamp-4 md:line-clamp-none max-w-2xl">
                             {anime.overview}
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                             {anime.genres?.map(g => (
                                 <span key={g.id} className="px-3 py-1 bg-white/10 backdrop-blur rounded-full text-xs font-medium text-white border border-white/10">
                                     {g.name}
@@ -208,7 +209,7 @@ const AnimeDetail = () => {
                         {/* Rating */}
                         <div
                             className={`shrink-0 text-right md:text-center min-w-[60px] ${ep.vote_average >= 8 ? 'text-green-400' : ep.vote_average >= 6.1 ? 'text-yellow-400' : 'text-red-400'
-                        }`}
+                                }`}
                         >
                             <div className="text-2xl font-bold">{ep.vote_average > 0 ? ep.vote_average.toFixed(1) : '-'}</div>
                             <div className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Score</div>

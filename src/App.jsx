@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Layout from './components/layout/Layout';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -36,6 +37,7 @@ function App() {
                         <Route path="/browse" element={<Browse />} />
                     </Routes>
                 </Layout>
+                <SpeedInsights />
             </Router>
         </QueryClientProvider>
     );

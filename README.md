@@ -95,16 +95,6 @@ Make sure you have Node.js installed on your machine.
 
 ---
 
-## 📸 Screenshots Gallery
-
-*(Replace these placeholders with actual screenshots of your application)*
-
-<div align="center">
-  <img src="https://via.placeholder.com/800x450.png?text=Home+Page+Screenshot" width="400" alt="Home Page" />
-  <img src="https://via.placeholder.com/800x450.png?text=Anime+Detail+Screenshot" width="400" alt="Anime Detail" />
-</div>
-
----
 
 ## 👨‍💻 Author
 

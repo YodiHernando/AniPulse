@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { getTopRatedAnime, getDiscoverAnime } from '../services/tmdb';
+import { getTopRatedAnime, getDiscoverMedia } from '../services/tmdb';
 import { ChevronDown, Loader2, Search, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
@@ -30,7 +30,7 @@ const Home = () => {
         isLoading: isDiscoverLoading
     } = useInfiniteQuery({
         queryKey: ['discoverAnime'],
-        queryFn: ({ pageParam = 1 }) => getDiscoverAnime(pageParam),
+        queryFn: ({ pageParam = 1 }) => getDiscoverMedia('tv', pageParam),
         getNextPageParam: (lastPage) => lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
     });
 

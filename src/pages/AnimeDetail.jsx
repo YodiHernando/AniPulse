@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getAnimeDetails, getSeasonDetails, getImageUrl } from '../services/tmdb';
+import { getAnimeDetails, getMediaDetails, getSeasonDetails, getImageUrl } from '../services/tmdb';
 import { Loader2, Calendar, Star, Clock } from 'lucide-react';
 import PulseChart from '../components/charts/PulseChart';
 import EpisodeCard from '../components/ui/EpisodeCard';
 import { useHistory } from '../hooks/useHistory';
 
-const AnimeDetail = () => {
+const AnimeDetail = ({ type = 'tv' }) => {
     const { id } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
     const [selectedSeason, setSelectedSeason] = useState(1);
@@ -23,8 +23,8 @@ const AnimeDetail = () => {
     }, [searchParams]);
 
     const { data: anime, isLoading: isAnimeLoading } = useQuery({
-        queryKey: ['anime', id],
-        queryFn: () => getAnimeDetails(id),
+        queryKey: ['media', type, id],
+        queryFn: () => getMediaDetails(id, type),
     });
 
     // Save to history when loaded
@@ -39,7 +39,7 @@ const AnimeDetail = () => {
     const { data: seasonData, isLoading: isSeasonLoading } = useQuery({
         queryKey: ['season', id, selectedSeason],
         queryFn: () => getSeasonDetails(id, selectedSeason),
-        enabled: !!anime, // Wait for anime details first
+        enabled: !!anime && type === 'tv', // Only fetch seasons for TV
     });
 
     const handleSeasonChange = (e) => {
@@ -53,10 +53,10 @@ const AnimeDetail = () => {
     }
 
     if (!anime) {
-        return <div className="h-screen flex items-center justify-center text-slate-500">Anime not found or failed to load.</div>;
+        return <div className="h-screen flex items-center justify-center text-slate-500">Media not found or failed to load.</div>;
     }
 
-    // Calculate The Big Three Stats
+    // Calculate The Big Three Stats (TV Only)
     const episodes = seasonData?.episodes || [];
     const validEpisodes = episodes.filter(ep => ep.vote_average > 0);
 
@@ -92,7 +92,7 @@ const AnimeDetail = () => {
                     {anime.poster_path ? (
                         <img
                             src={getImageUrl(anime.poster_path, 'w342')}
-                            alt={anime.name}
+                            alt={anime.name || anime.title}
                             className="w-[180px] md:w-[220px] rounded-xl shadow-2xl border-4 border-slate-950 shrink-0" // Floating effect
                         />
                     ) : (
@@ -101,11 +101,11 @@ const AnimeDetail = () => {
                         </div>
                     )}
                     <div className="space-y-4 max-w-3xl text-center md:text-left pt-4 md:pt-0">
-                        <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">{anime.name}</h1>
+                        <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">{anime.name || anime.title}</h1>
                         <p className="text-slate-300 text-sm/relaxed line-clamp-4 md:line-clamp-none max-w-2xl">
                             {anime.overview}
                         </p>
-                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                        <div className="flex flex-wrap gap-2 justify-center md:justify-start items-center">
                             {anime.genres?.map(g => (
                                 <span key={g.id} className="px-3 py-1 bg-white/10 backdrop-blur rounded-full text-xs font-medium text-white border border-white/10">
                                     {g.name}
@@ -114,76 +114,84 @@ const AnimeDetail = () => {
                             <span className="px-3 py-1 bg-blue-600 rounded-full text-xs font-medium text-white border border-blue-500 shadow-lg shadow-blue-500/20">
                                 {anime.status || 'Unknown Status'}
                             </span>
+                            <div className="flex items-center gap-1 px-3 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-xs font-bold border border-yellow-500/30">
+                                <Star className="w-3 h-3 fill-current" />
+                                <span>{anime.vote_average?.toFixed(1)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Control & Stats Bar */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 px-2">
-                <div className="flex items-center gap-4">
-                    <label className="text-sm font-medium text-slate-400">Season:</label>
-                    <select
-                        value={selectedSeason}
-                        onChange={handleSeasonChange}
-                        disabled={!anime.seasons || anime.seasons.length === 0}
-                        className="bg-slate-900 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                    >
-                        {anime.seasons?.map(season => (
-                            // Filter out Season 0 (Specials) if preferred, but usually good to keep
-                            season.season_number > 0 && (
-                                <option key={season.id} value={season.season_number}>
-                                    Season {season.season_number} ({season.episode_count} eps)
-                                </option>
-                            )
-                        )) || <option>No Seasons</option>}
-                    </select>
-                </div>
+            {/* Control & Stats Bar (TV Only) */}
+            {type === 'tv' && (
+                <>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 px-2">
+                        <div className="flex items-center gap-4">
+                            <label className="text-sm font-medium text-slate-400">Season:</label>
+                            <select
+                                value={selectedSeason}
+                                onChange={handleSeasonChange}
+                                disabled={!anime.seasons || anime.seasons.length === 0}
+                                className="bg-slate-900 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                            >
+                                {anime.seasons?.map(season => (
+                                    // Filter out Season 0 (Specials) if preferred, but usually good to keep
+                                    season.season_number > 0 && (
+                                        <option key={season.id} value={season.season_number}>
+                                            Season {season.season_number} ({season.episode_count} eps)
+                                        </option>
+                                    )
+                                )) || <option>No Seasons</option>}
+                            </select>
+                        </div>
 
-                {/* The Big Three Stats */}
-                {validEpisodes.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4 w-full md:w-auto">
-                        <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
-                            <div className="text-xs text-slate-500 mb-1">Best Ep</div>
-                            <div className="text-green-400 font-bold text-lg">{bestEpisode?.vote_average?.toFixed(1) || '-'}</div>
-                            <div className="text-[10px] text-slate-600 truncate max-w-[80px] mx-auto">#{bestEpisode?.episode_number || '-'}</div>
-                        </div>
-                        <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
-                            <div className="text-xs text-slate-500 mb-1">Worst Ep</div>
-                            <div className="text-red-400 font-bold text-lg">{worstEpisode?.vote_average?.toFixed(1) || '-'}</div>
-                            <div className="text-[10px] text-slate-600 truncate max-w-[80px] mx-auto">#{worstEpisode?.episode_number || '-'}</div>
-                        </div>
-                        <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
-                            <div className="text-xs text-slate-500 mb-1">Average</div>
-                            <div className="text-blue-400 font-bold text-lg">{averageScore}</div>
-                            <div className="text-[10px] text-slate-600">Season {selectedSeason}</div>
-                        </div>
+                        {/* The Big Three Stats */}
+                        {validEpisodes.length > 0 && (
+                            <div className="grid grid-cols-3 gap-4 w-full md:w-auto">
+                                <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
+                                    <div className="text-xs text-slate-500 mb-1">Best Ep</div>
+                                    <div className="text-green-400 font-bold text-lg">{bestEpisode?.vote_average?.toFixed(1) || '-'}</div>
+                                    <div className="text-[10px] text-slate-600 truncate max-w-[80px] mx-auto">#{bestEpisode?.episode_number || '-'}</div>
+                                </div>
+                                <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
+                                    <div className="text-xs text-slate-500 mb-1">Worst Ep</div>
+                                    <div className="text-red-400 font-bold text-lg">{worstEpisode?.vote_average?.toFixed(1) || '-'}</div>
+                                    <div className="text-[10px] text-slate-600 truncate max-w-[80px] mx-auto">#{worstEpisode?.episode_number || '-'}</div>
+                                </div>
+                                <div className="bg-slate-900/50 p-3 rounded-xl border border-white/5 text-center">
+                                    <div className="text-xs text-slate-500 mb-1">Average</div>
+                                    <div className="text-blue-400 font-bold text-lg">{averageScore}</div>
+                                    <div className="text-[10px] text-slate-600">Season {selectedSeason}</div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
 
-            {/* Pulse Chart */}
-            {isSeasonLoading ? (
-                <div className="h-[400px] bg-slate-900/30 rounded-2xl animate-pulse" />
-            ) : validEpisodes.length > 1 ? (
-                <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <PulseChart data={episodes} />
-                </div>
-            ) : (
-                <div className="h-[200px] flex items-center justify-center text-slate-500 bg-slate-900/30 rounded-2xl mb-12">
-                    Not enough rating data for this season chart.
-                </div>
+                    {/* Pulse Chart */}
+                    {isSeasonLoading ? (
+                        <div className="h-[400px] bg-slate-900/30 rounded-2xl animate-pulse" />
+                    ) : validEpisodes.length > 1 ? (
+                        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <PulseChart data={episodes} />
+                        </div>
+                    ) : (
+                        <div className="h-[200px] flex items-center justify-center text-slate-500 bg-slate-900/30 rounded-2xl mb-12">
+                            Not enough rating data for this season chart.
+                        </div>
+                    )}
+
+                    {/* Episode List */}
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            Episodes <span className="text-slate-500 text-sm font-normal">({episodes?.length})</span>
+                        </h3>
+                        {episodes?.map((ep) => (
+                            <EpisodeCard key={ep.id} ep={ep} />
+                        ))}
+                    </div>
+                </>
             )}
-
-            {/* Episode List */}
-            <div className="space-y-4">
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    Episodes <span className="text-slate-500 text-sm font-normal">({episodes?.length})</span>
-                </h3>
-                {episodes?.map((ep) => (
-                    <EpisodeCard key={ep.id} ep={ep} />
-                ))}
-            </div>
         </div>
     );
 };

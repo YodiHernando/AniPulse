@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getAnimeVideos } from '../../services/tmdb';
-import { Star, Plus, Play } from 'lucide-react';
+import { Star, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import TrailerModal from './TrailerModal';
 
 const AnimeCard = ({ anime, index = 0 }) => {
 
-    const [isHovered, setIsHovered] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [shouldFetchVideo, setShouldFetchVideo] = useState(false);
 
@@ -59,23 +58,15 @@ const AnimeCard = ({ anime, index = 0 }) => {
                 <div className="absolute inset-0 bg-black/60 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hidden md:flex flex-col items-center justify-center gap-3 p-4 backdrop-blur-[2px]">
                     <Link to={link} className="absolute inset-0 z-0" aria-label="View Details" />
 
-                    <div className="z-10 flex flex-col gap-2 w-full">
-                        <button
-                            onClick={handleTrailerClick}
-                            className="flex items-center justify-center gap-2 w-full bg-white text-black font-bold py-2 rounded-full hover:bg-slate-200 transition-colors text-xs uppercase tracking-wide cursor-pointer relative z-20"
-                        >
-                            <Play className="w-3 h-3 fill-current" /> Trailer
-                        </button>
-                        <button className="flex items-center justify-center gap-2 w-full bg-white/20 text-white font-bold py-2 rounded-full hover:bg-white/30 transition-colors text-xs uppercase tracking-wide backdrop-blur-md relative z-20">
-                            <Plus className="w-4 h-4" /> Watchlist
-                        </button>
-                    </div>
+                    <button
+                        onClick={handleTrailerClick}
+                        className="flex items-center justify-center gap-2 w-full bg-white text-black font-bold py-2 rounded-full hover:bg-slate-200 transition-colors text-xs uppercase tracking-wide cursor-pointer relative z-20"
+                    >
+                        <Play className="w-3 h-3 fill-current" /> Trailer
+                    </button>
                 </div>
 
-                {/* Top Right Add Button */}
-                <button className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-blue-600 transition-colors backdrop-blur-md z-20">
-                    <Plus className="w-4 h-4" />
-                </button>
+                {/* Bottom Right Rating Badge on Image */}
             </div>
 
             <TrailerModal

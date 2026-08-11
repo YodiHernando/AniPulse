@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../../services/tmdb';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Calendar, Info, ChevronRight, Play, ChevronLeft } from 'lucide-react';
+import { Star, Calendar, Info, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const HeroCarousel = ({ slides }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -171,13 +171,9 @@ const HeroCarousel = ({ slides }) => {
                             className="flex items-center gap-3 md:gap-4 pt-2 md:pt-4"
                         >
                             <Link
-                                to={`/tv/${currentAnime.id}`}
-                                className="flex items-center gap-2 px-5 py-2.5 md:px-8 md:py-3 bg-white text-slate-950 font-bold text-sm md:text-base rounded-full hover:bg-slate-200 transition-all transform hover:scale-105 shadow-xl shadow-white/10"
-                            >
-                                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" /> Watch Now
-                            </Link>
-                            <Link
-                                to={`/tv/${currentAnime.id}`}
+                                to={`https://www.themoviedb.org/tv/${currentAnime.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-white/10 text-white font-semibold text-sm md:text-base rounded-full hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10"
                             >
                                 <Info className="w-4 h-4 md:w-5 md:h-5" /> Details

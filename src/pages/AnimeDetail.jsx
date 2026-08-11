@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getAnimeDetails, getMediaDetails, getSeasonDetails, getImageUrl } from '../services/tmdb';
+import { getMediaDetails, getSeasonDetails, getImageUrl } from '../services/tmdb';
 import { Loader2, Calendar, Star, Clock } from 'lucide-react';
 import PulseChart from '../components/charts/PulseChart';
 import EpisodeCard from '../components/ui/EpisodeCard';
@@ -75,7 +75,6 @@ const AnimeDetail = ({ type = 'tv' }) => {
     return (
         <div className="pb-20 pt-20 md:pt-24">
             {/* Hero Section */}
-            {/* Hero Section */}
             <div className="relative md:h-[50vh] w-full rounded-2xl overflow-hidden mb-12 border border-white/5 bg-slate-900">
                 <div className="absolute inset-0">
                     {anime.backdrop_path && (
@@ -135,14 +134,12 @@ const AnimeDetail = ({ type = 'tv' }) => {
                                 disabled={!anime.seasons || anime.seasons.length === 0}
                                 className="bg-slate-900 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
                             >
-                                {anime.seasons?.map(season => (
-                                    // Filter out Season 0 (Specials) if preferred, but usually good to keep
-                                    season.season_number > 0 && (
-                                        <option key={season.id} value={season.season_number}>
-                                            Season {season.season_number} ({season.episode_count} eps)
-                                        </option>
-                                    )
-                                )) || <option>No Seasons</option>}
+                                {anime.seasons?.filter(s => s.season_number > 0).map(season => (
+                                    <option key={season.id} value={season.season_number}>
+                                        Season {season.season_number} ({season.episode_count} eps)
+                                    </option>
+                                ))}
+                                {!anime.seasons?.filter(s => s.season_number > 0).length && <option>No Seasons</option>}
                             </select>
                         </div>
 

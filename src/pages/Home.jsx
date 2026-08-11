@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { getTopRatedAnime, getDiscoverMedia } from '../services/tmdb';
+import { getTopRatedAnime, getDiscoverMedia, getImageUrl } from '../services/tmdb';
 import { ChevronDown, Loader2, Search, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
@@ -91,7 +91,7 @@ const Home = () => {
                         <div className="flex justify-center gap-4 flex-wrap">
                             {history.slice(0, 5).map(item => (
                                 <Link key={item.id} to={`/tv/${item.id}`} className="group relative w-12 md:w-16 opacity-60 hover:opacity-100 transition-opacity">
-                                    <img src={`https://image.tmdb.org/t/p/w154${item.poster_path}`} alt={item.name} className="w-full rounded-md shadow-lg border border-white/10" />
+                                    <img src={getImageUrl(item.poster_path, 'w154')} alt={item.name} className="w-full rounded-md shadow-lg border border-white/10" />
                                 </Link>
                             ))}
                         </div>
@@ -105,7 +105,6 @@ const Home = () => {
                 </div>
             </motion.div>
 
-            {/* Top Rated Section - Hero Carousel */}
             {/* Top Rated Section - Hero Carousel */}
             <div id="trending-section" className="w-full container max-w-7xl mx-auto px-4 pt-12">
                 <div className="flex items-center justify-between mb-8">
@@ -144,7 +143,7 @@ const Home = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
                     {isDiscoverLoading ? (
-                        [...Array(20)].map((_, i) => (
+                        [...Array(10)].map((_, i) => (
                             <div key={i} className="flex flex-col gap-2">
                                 <Skeleton className="aspect-[2/3] w-full rounded-xl" />
                                 <div className="space-y-2">

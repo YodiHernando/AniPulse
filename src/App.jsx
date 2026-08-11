@@ -11,6 +11,7 @@ import AnimeDetail from './pages/AnimeDetail';
 import Browse from './pages/Browse';
 
 import ScrollToTop from './components/utils/ScrollToTop';
+import ErrorBoundary from './components/utils/ErrorBoundary';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -28,13 +29,15 @@ function App() {
                 <ScrollToTop />
                 <SpeedInsights />
                 <Layout>
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/search" element={<SearchResults />} />
-                        <Route path="/tv/:id" element={<AnimeDetail type="tv" />} />
-                        <Route path="/movie/:id" element={<AnimeDetail type="movie" />} />
-                        <Route path="/browse" element={<Browse />} />
-                    </Routes>
+                    <ErrorBoundary>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/search" element={<SearchResults />} />
+                            <Route path="/tv/:id" element={<AnimeDetail type="tv" />} />
+                            <Route path="/movie/:id" element={<AnimeDetail type="movie" />} />
+                            <Route path="/browse" element={<Browse />} />
+                        </Routes>
+                    </ErrorBoundary>
                 </Layout>
             </Router>
         </QueryClientProvider>

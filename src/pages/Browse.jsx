@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getGenres, getDiscoverMedia, getTrendingMedia, getUpcomingMedia } from '../services/tmdb';
+import { TMDB_CONFIG } from '../config';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Filter, X, Loader2, Sparkles, TrendingUp, Calendar, Star, Clapperboard, MonitorPlay } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -33,10 +34,15 @@ const Browse = () => {
         localStorage.setItem('browseType', mediaType);
     }, [mediaType, activeTab, setSearchParams]);
 
-    // Scroll Restoration Logic
+    // Scroll Restoration Logic (throttled)
     useEffect(() => {
-        // Save scroll position before unmount or navigation
+        let lastScroll = 0;
+        const THROTTLE_MS = 50;
+
         const handleScroll = () => {
+            const now = Date.now();
+            if (now - lastScroll < THROTTLE_MS) return;
+            lastScroll = now;
             sessionStorage.setItem(`browse_scroll_${mediaType}_${activeTab}`, window.scrollY.toString());
         };
 
@@ -59,9 +65,8 @@ const Browse = () => {
         queryKey: ['genres', mediaType],
         queryFn: () => getGenres(mediaType),
         staleTime: Infinity,
-        select: (data) => {
-            const excludedIds = [10763, 10764, 10766, 10767, 37, 99];
-            return data.filter(g => !excludedIds.includes(g.id));
+            select: (data) => {
+                return data.filter(g => !TMDB_CONFIG.EXCLUDED_GENRE_IDS.includes(g.id));
         }
     });
 

@@ -98,7 +98,6 @@ const Header = () => {
                     </div>
 
                     {/* Search Bar Toggle */}
-                    {/* Search Bar Toggle */}
                     <div ref={listRef} className="flex items-center">
                         {/* Desktop & Mobile Search Container */}
                         <div className={`

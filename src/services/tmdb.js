@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { TMDB_CONFIG } from '../config';
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -17,7 +18,7 @@ export const getTopRatedAnime = async () => {
             with_genres: 16,
             with_original_language: 'ja',
             sort_by: 'vote_average.desc',
-            'vote_count.gte': 1000, // Higher threshold for "All Time"
+            'vote_count.gte': TMDB_CONFIG.TOP_RATED_VOTE_THRESHOLD,
             page: 1
         }
     });
@@ -60,10 +61,9 @@ export const getTrendingMedia = async (type = 'tv', page = 1) => {
 
     // 2. TV Series: Global /discover favors long-running shows (Legacy).
     //    User wants "Trending Now". So we use the real /trending endpoint + Deep Fetch.
-    const pagesToFetch = 10;
+    const pagesToFetch = TMDB_CONFIG.TRENDING_PAGES_TO_FETCH;
     const startPage = (page - 1) * pagesToFetch + 1;
 
-    // Generate promises for parallel fetching
     const requests = Array.from({ length: pagesToFetch }, (_, i) =>
         tmdb.get(`/trending/${type}/week`, {
             params: {
@@ -74,26 +74,22 @@ export const getTrendingMedia = async (type = 'tv', page = 1) => {
     );
 
     const responses = await Promise.all(requests);
-    const allResults = responses.flatMap(r => r.data.results);
+    let allResults = responses.flatMap(r => r.data.results);
 
-    // Filter for Anime (Genre 16) + Japanese
     const animeResults = allResults.filter(item =>
         item.genre_ids?.includes(16) &&
         item.original_language === 'ja'
     );
 
-    // Deduplicate by ID
     const unique = [...new Map(animeResults.map(item => [item.id, item])).values()];
 
     return {
         page: page,
         results: unique.slice(0, 20),
-        total_pages: 100, // Cap at 100 deep-pages to be safe
-        total_results: 2000
+        total_pages: TMDB_CONFIG.MAX_SCRAPING_PAGES,
+        total_results: unique.length
     };
 };
-
-
 
 export const getUpcomingMedia = async (type = 'tv', page = 1, genreId = null) => {
     const today = new Date().toISOString().split('T')[0];
@@ -148,7 +144,7 @@ export const getDiscoverMedia = async (type = 'tv', page = 1, genreId = null, so
         with_original_language: 'ja',
         sort_by: safeSortBy,
         page: page,
-        'vote_count.gte': 50
+        'vote_count.gte': TMDB_CONFIG.DISCOVER_MIN_VOTE_COUNT
     };
 
     if (genreId) {
@@ -183,17 +179,11 @@ export const searchMedia = async (query, type = 'tv') => {
     );
 };
 
-// Legacy support
-export const searchAnime = (query) => searchMedia(query, 'tv');
-
 export const getMediaDetails = async (id, type = 'tv') => {
     // Generic detail fetcher
     const response = await tmdb.get(`/${type}/${id}`);
     return response.data;
 };
-
-// Legacy support (redirect to generic)
-export const getAnimeDetails = (id) => getMediaDetails(id, 'tv');
 
 export const getSeasonDetails = async (tvId, seasonNumber) => {
     const response = await tmdb.get(`/tv/${tvId}/season/${seasonNumber}`);
@@ -205,7 +195,7 @@ export const getAnimeVideos = async (id) => {
     return response.data.results;
 };
 
-export const getImageUrl = (path, size = 'w500') => {
+export const getImageUrl = (path, size = TMDB_CONFIG.DEFAULT_IMAGE_SIZE) => {
     if (!path) return null;
     return `https://image.tmdb.org/t/p/${size}${path}`;
 };

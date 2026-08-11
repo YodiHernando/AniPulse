@@ -6,7 +6,7 @@
   <p align="center">
     <strong>A modern, beautiful, and responsive Anime Database & Pulse Tracker built with React and Vite.</strong>
     <br />
-    Explore the aesthetic world of anime, track episode ratings, and more!
+    Explore anime and movies, track episode ratings, filter by genre, and more!
   </p>
 
   <p align="center">
@@ -34,12 +34,17 @@
 
 ### 🎯 Key Features
 
-- **📺 Comprehensive Anime Database**: Search and discover anime shows easily.
+- **📺 Comprehensive Anime & Movie Database**: Search and discover anime shows and movies easily.
 - **📊 Pulse Interactive Charts**: Visualize the quality of each season based on user ratings using aesthetic Recharts.
 - **📖 Episode Tracking**: Tap to dive deep into episode descriptions, durations, and scores.
-- **🕰️ Watch History**: Automatically saves your recently viewed anime.
+- **📂 Browse & Filter**: Browse by type (Series or Movies), filter by tabs (Newest, Trending, Top Rated, Upcoming), and narrow results by genre tags.
+- **🔍 Search with Filters**: Search by query and filter by type (TV Series or Movies).
+- **🎬 Movie Support**: View anime and movie detail pages with seasons, trailers, and ratings.
+- **🎥 Trailer Popup**: Watch YouTube trailers directly in a modal overlay.
+- **🕰️ Watch History**: Automatically saves your recently viewed anime in localStorage.
+- **👁️ Spoiler Guard**: Blurred content wrapper to hide episode/synopsis spoilers until you're ready.
 - **📱 100% Mobile Responsive**: A seamless experience across desktop, tablet, and mobile with intuitive touch elements (like horizontal scrolling rows and tap-to-expand cards).
-- **⚡ Lightning Fast**: Built with Vite and React Query for instantaneous data fetching and caching.
+- **⚡ Lightning Fast**: Built with Vite, React Query, and smooth Framer Motion page transitions.
 
 ---
 
@@ -52,6 +57,7 @@
 - **Routing**: [React Router v6](https://reactrouter.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Charts**: [Recharts](https://recharts.org/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Analytics**: Vercel Speed Insights
 
 ---
@@ -86,7 +92,7 @@ Make sure you have Node.js installed on your machine.
 5. **Set up environment variables**
    Create a `.env` file in the root directory and add your TMDB access token:
    ```env
-   VITE_TMDB_ACCESS_TOKEN=your_tmdb_read_access_token_here
+    VITE_TMDB_API_KEY=your_tmdb_api_key_here
    ```
 6. **Start the development server**
    ```sh

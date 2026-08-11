@@ -42,7 +42,6 @@
 - **🎬 Movie Support**: View anime and movie detail pages with seasons, trailers, and ratings.
 - **🎥 Trailer Popup**: Watch YouTube trailers directly in a modal overlay.
 - **🕰️ Watch History**: Automatically saves your recently viewed anime in localStorage.
-- **👁️ Spoiler Guard**: Blurred content wrapper to hide episode/synopsis spoilers until you're ready.
 - **📱 100% Mobile Responsive**: A seamless experience across desktop, tablet, and mobile with intuitive touch elements (like horizontal scrolling rows and tap-to-expand cards).
 - **⚡ Lightning Fast**: Built with Vite, React Query, and smooth Framer Motion page transitions.
 

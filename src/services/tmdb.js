@@ -11,20 +11,6 @@ const tmdb = axios.create({
     },
 });
 
-export const getTopRatedAnime = async () => {
-    // Top Rated All Time
-    const response = await tmdb.get('/discover/tv', {
-        params: {
-            with_genres: 16,
-            with_original_language: 'ja',
-            sort_by: 'vote_average.desc',
-            'vote_count.gte': TMDB_CONFIG.TOP_RATED_VOTE_THRESHOLD,
-            page: 1
-        }
-    });
-    return response.data.results;
-};
-
 export const getThisSeasonAnime = async () => {
     // Get current date for filtering "This Season"
     // For simplicity and robustness, we'll use "on_the_air" which is "episodes airing in next 7 days" 
@@ -44,51 +30,15 @@ export const getThisSeasonAnime = async () => {
 // --- Generic Media Fetchers (Anime: TV & Movie) ---
 
 export const getTrendingMedia = async (type = 'tv', page = 1) => {
-    // HYBRID STRATEGY:
-    // 1. Movies: Global /trending movies rarely have Anime. Deep fetching is inefficient and results in low count.
-    //    We use /discover with popularity.desc. This guarantees 20 items per page.
-    if (type === 'movie') {
-        const params = {
-            with_genres: 16,
-            with_original_language: 'ja',
-            sort_by: 'popularity.desc',
-            page: page,
-            include_adult: false
-        };
-        const response = await tmdb.get(`/discover/${type}`, { params });
-        return response.data;
-    }
-
-    // 2. TV Series: Global /discover favors long-running shows (Legacy).
-    //    User wants "Trending Now". So we use the real /trending endpoint + Deep Fetch.
-    const pagesToFetch = TMDB_CONFIG.TRENDING_PAGES_TO_FETCH;
-    const startPage = (page - 1) * pagesToFetch + 1;
-
-    const requests = Array.from({ length: pagesToFetch }, (_, i) =>
-        tmdb.get(`/trending/${type}/week`, {
-            params: {
-                with_original_language: 'ja',
-                page: startPage + i
-            }
-        })
-    );
-
-    const responses = await Promise.all(requests);
-    let allResults = responses.flatMap(r => r.data.results);
-
-    const animeResults = allResults.filter(item =>
-        item.genre_ids?.includes(16) &&
-        item.original_language === 'ja'
-    );
-
-    const unique = [...new Map(animeResults.map(item => [item.id, item])).values()];
-
-    return {
+    const params = {
+        with_genres: 16,
+        with_original_language: 'ja',
+        sort_by: 'popularity.desc',
         page: page,
-        results: unique.slice(0, 20),
-        total_pages: TMDB_CONFIG.MAX_SCRAPING_PAGES,
-        total_results: unique.length
+        include_adult: false
     };
+    const response = await tmdb.get(`/discover/${type}`, { params });
+    return response.data;
 };
 
 export const getUpcomingMedia = async (type = 'tv', page = 1, genreId = null) => {
@@ -131,7 +81,7 @@ export const getAiringTodayMedia = async (type = 'tv') => {
     return response.data.results.filter(item => item.genre_ids?.includes(16));
 };
 
-export const getDiscoverMedia = async (type = 'tv', page = 1, genreId = null, sortBy = 'popularity.desc') => {
+export const getDiscoverMedia = async (type = 'tv', page = 1, genreId = null, sortBy = 'popularity.desc', minVoteCount = TMDB_CONFIG.DISCOVER_MIN_VOTE_COUNT) => {
     // Remap sort keys for Movies if needed
     let safeSortBy = sortBy;
     if (type === 'movie') {

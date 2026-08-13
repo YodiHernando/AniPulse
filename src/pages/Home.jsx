@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { getTopRatedAnime, getDiscoverMedia, getImageUrl } from '../services/tmdb';
+import { getDiscoverMedia, getImageUrl } from '../services/tmdb';
 import { ChevronDown, Loader2, Search, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
@@ -19,7 +19,7 @@ const Home = () => {
 
     const { data: topRated, isLoading: isTopRatedLoading } = useQuery({
         queryKey: ['topRatedAnime'],
-        queryFn: getTopRatedAnime,
+        queryFn: () => getDiscoverMedia('tv', 1, null, 'vote_average.desc', 1000),
     });
 
     const {
@@ -127,7 +127,7 @@ const Home = () => {
                         </div>
                     </div>
                 ) : (
-                    <HeroCarousel slides={topRated || []} />
+                    <HeroCarousel slides={topRated?.results || []} />
                 )}
             </div>
 

@@ -37,7 +37,7 @@
 - **📺 Comprehensive Anime & Movie Database**: Search and discover anime shows and movies easily.
 - **📊 Pulse Interactive Charts**: Visualize the quality of each season based on user ratings using aesthetic Recharts.
 - **📖 Episode Tracking**: Tap to dive deep into episode descriptions, durations, and scores.
-- **📂 Browse & Filter**: Browse by type (Series or Movies), filter by tabs (Newest, Trending, Top Rated, Upcoming), and narrow results by genre tags.
+- **📂 Browse & Filter**: Browse by type (Series or Movies), filter by tabs (Newest, Top Rated, Upcoming), and narrow results by genre tags.
 - **🔍 Search with Filters**: Search by query and filter by type (TV Series or Movies).
 - **🎬 Movie Support**: View anime and movie detail pages with seasons, trailers, and ratings.
 - **🎥 Trailer Popup**: Watch YouTube trailers directly in a modal overlay.

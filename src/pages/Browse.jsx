@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { getGenres, getDiscoverMedia, getTrendingMedia, getUpcomingMedia } from '../services/tmdb';
+import { getGenres, getDiscoverMedia, getUpcomingMedia } from '../services/tmdb';
 import { TMDB_CONFIG } from '../config';
 import AnimeCard from '../components/ui/AnimeCard';
-import { Filter, X, Loader2, Sparkles, TrendingUp, Calendar, Star, Clapperboard, MonitorPlay } from 'lucide-react';
+import { Filter, X, Loader2, Sparkles, Calendar, Star, Clapperboard, MonitorPlay } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import PageTransition from '../components/utils/PageTransition';
@@ -67,7 +67,7 @@ const Browse = () => {
         staleTime: Infinity,
             select: (data) => {
                 return data.filter(g => !TMDB_CONFIG.EXCLUDED_GENRE_IDS.includes(g.id));
-        }
+            }
     });
 
     const {
@@ -79,15 +79,17 @@ const Browse = () => {
     } = useInfiniteQuery({
         queryKey: ['browseMedia', mediaType, activeTab, selectedGenre?.id],
         queryFn: ({ pageParam = 1 }) => {
-            if (activeTab === 'trending' && !selectedGenre) return getTrendingMedia(mediaType, pageParam);
             if (activeTab === 'upcoming') return getUpcomingMedia(mediaType, pageParam, selectedGenre?.id);
 
             let sortBy = 'popularity.desc';
             if (activeTab === 'newest') sortBy = mediaType === 'movie' ? 'primary_release_date.desc' : 'first_air_date.desc';
             if (activeTab === 'top_rated') sortBy = 'vote_average.desc';
-            if (activeTab === 'trending') sortBy = 'popularity.desc';
 
-            return getDiscoverMedia(mediaType, pageParam, selectedGenre?.id, sortBy);
+            const minVoteCount = activeTab === 'top_rated'
+                ? TMDB_CONFIG.TOP_RATED_VOTE_THRESHOLD
+                : TMDB_CONFIG.DISCOVER_MIN_VOTE_COUNT;
+
+            return getDiscoverMedia(mediaType, pageParam, selectedGenre?.id, sortBy, minVoteCount);
         },
         getNextPageParam: (lastPage) => lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
     });
@@ -107,7 +109,6 @@ const Browse = () => {
 
     const tabs = [
         { id: 'newest', label: 'Newest', icon: Sparkles },
-        { id: 'trending', label: 'Trending', icon: TrendingUp },
         { id: 'top_rated', label: 'Top Rated', icon: Star },
         { id: 'upcoming', label: 'Upcoming', icon: Calendar },
     ];
